@@ -13,6 +13,7 @@ namespace Maintenance\Listener;
 use Maintenance\Config;
 use Zend\EventManager\AbstractListenerAggregate;
 use Zend\EventManager\EventManagerInterface;
+use Zend\Http\Header\RetryAfter;
 use Zend\Http\PhpEnvironment\Request as PhpRequest;
 use Zend\Http\Request as HttpRequest;
 use Zend\Http\Response as HttpResponse;
@@ -81,6 +82,10 @@ class MaintenanceListener extends AbstractListenerAggregate
         }
         
         $response->setStatusCode( $config->getStatusCode() );
+        if (!$response->getHeaders()->has('Retry-After')) {
+            $retryAfter = new RetryAfter();
+            $response->getHeaders()->addHeader($retryAfter);
+        }
         $response->setContent($content);
         $e->setResponse($response);
 
