@@ -10,6 +10,7 @@
 
 namespace Maintenance\Listener;
 
+use DateTime;
 use Maintenance\Config;
 use Zend\EventManager\AbstractListenerAggregate;
 use Zend\EventManager\EventManagerInterface;
@@ -80,11 +81,16 @@ class MaintenanceListener extends AbstractListenerAggregate
         if (!$response instanceof HttpResponse) {
             $response = new HttpResponse();
         }
-        
-        $response->setStatusCode( $config->getStatusCode() );
-        if (!$response->getHeaders()->has('Retry-After')) {
-            $retryAfter = new RetryAfter();
-            $response->getHeaders()->addHeader($retryAfter);
+
+        $statusCode = $config->getStatusCode();
+        $response->setStatusCode( $statusCode );
+        if (($statusCode === 503) && (!$response->getHeaders()->has('Retry-After'))) {
+            $retryDate = $config->getRetryAfter();
+            if ($retryDate instanceof DateTime) {
+                $retryAfter = new RetryAfter();
+                $retryAfter->setDate($retryDate);
+                $response->getHeaders()->addHeader($retryAfter);
+            }
         }
         $response->setContent($content);
         $e->setResponse($response);

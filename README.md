@@ -123,6 +123,21 @@ You may enable certain IP addresses to access yur site during maintenance mode. 
     );
     ```
 
+#### Retry-After Header ####
+
+The `Retry-After` HTTP header may be sent for responses with a status code set to 503. If the config value is not set, set to a past date, or the status code is not 503; then the header will not be set.
+
+1. Set the full date and time for the retry-after header in your `application.config.php`file.
+
+    ```php
+    <?php
+    return array(
+        // ...
+        'retry_after' => '2015-12-07 00:00:00',
+        // ...
+    );
+    ```
+
 #### HTTP Status Code ####
 
 By default, the server will return a 503 (Service Unavailable) HTTP status code when in maintenance mode. If you wish to change the HTTP status code for any reason you may do so.

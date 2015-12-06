@@ -10,6 +10,9 @@
 
 namespace Maintenance;
 
+use DateTime;
+use Maintenance\Exception;
+
 class Config
 {
     /**
@@ -17,6 +20,13 @@ class Config
      * @var bool
      */
     protected $enabled = false;
+
+    /**
+     * The retry-after time
+     * 
+     * @var DateTime
+     */
+    protected $retryAfter = null;
 
     /**
      * HTTP status code for maintenance mode.
@@ -31,7 +41,7 @@ class Config
      * @var string|null
      */
     protected $template = null;
-    
+
     /**
      * Whitelist for maintenance mode.
      * 
@@ -45,6 +55,10 @@ class Config
             $this->setEnabled($config['enabled']);
         }
 
+        if (isset($config['retry_after'])) {
+            $this->setRetryAfter($config['retry_after']);
+        }
+
         if (isset($config['status_code'])) {
             $this->setStatusCode($config['status_code']);
         }
@@ -56,6 +70,22 @@ class Config
         if (isset($config['whitelist'])) {
             $this->setWhitelist($config['whitelist']);
         }
+    }
+
+    /**
+     * Get the retry-after date.
+     * 
+     * @return DateTime|null
+     */
+    public function getRetryAfter()
+    {
+        if ($this->retryAfter instanceof DateTime) {
+            $current = new DateTime();
+            if ($this->retryAfter > $current) {
+                return $this->retryAfter;
+            }
+        }
+        return null;
     }
 
     /**
@@ -105,6 +135,7 @@ class Config
      * Enable or disable the maintenance mode.
      * 
      * @param bool $enabled
+     * @return Config
      */
     public function setEnabled($enabled = true)
     {
@@ -113,10 +144,36 @@ class Config
     }
  
     /**
+     * Set the retry-after date.
+     * 
+     * @param string|int|DateTime $date
+     * @return Config
+     */
+    public function setRetryAfter($date)
+    {
+        if (is_string($date)) {
+            $this->retryAfter = new \DateTime($date);
+        } elseif (is_int($date)) {
+            $this->retryAfter = new \DateTime('@' . $date);
+        } elseif ($date instanceof \DateTime) {
+            $this->retryAfter = $date;
+        } else {
+            throw new Exception\InvalidArgumentException(sprintf(
+                'Date should be a string, integer or ' .
+                'instance of \DateTime; received "%s"',
+                __NAMESPACE__,
+                (is_object($date) ? get_class($date) : gettype($date))
+            ));
+        }
+        
+        return $this;
+    }
+
+    /**
      * Set the HTTP status code for maintenance mode.
      * 
      * @param int $code
-     * @return MaintenanceConfig
+     * @return Config
      */
     public function setStatusCode($code)
     {
